@@ -24,7 +24,10 @@ abstract sig Employee {
 sig Intern extends Employee {
 delivers: some Delivery,
 isChef: one Bool
+} {
+//delivers.deliveredBy = Intern
 }
+
 
 sig Chef extends Employee {
 processOrder: set Order,
@@ -33,6 +36,8 @@ makes: some Pizza //Check that relation
 
 sig Courier extends Employee {
 delivers: some Delivery
+}{
+
 }
 
 one sig Manager {
@@ -45,9 +50,9 @@ manager: one Manager
 
 sig Customer {
 isPremium: one Bool,
-orders: some Order //Ask composition
+customerOrders: some Order //Ask composition
 } {
-isPremium in False && # orders <= 2 
+((isPremium in True && # delivered.False =< 2) || (isPremium in False && # delivered.False =< 1))	
 }
 
 one sig ManagementSystem {
@@ -58,8 +63,7 @@ manageAnalytics: one Analytics
 
 sig Delivery {
 deliveredBy: one Courier +  Intern,
-orders: some Order,
-delivered: one Bool
+deliveryOrders: some Order
 }
 
 sig Order {
@@ -68,7 +72,8 @@ containsOf: some Pizza,
 processedBy: one Chef,
 nextOrder: lone Order,
 deliveredBy: one Delivery,
-managedBy: one ManagementSystem
+managedBy: one ManagementSystem,
+delivered: one Bool
 }
 
 sig Time { }
@@ -155,4 +160,4 @@ fun getAllBeingDeliveredOrders[m: ManagementSystem] : set Order {  }
 
 */
 
-run empty for 3 but 4 Chef, 3 Courier, 2 Intern, 1 Customer, 1 Order 
+run empty for 3 but 1 Chef, 1 Courier, 0 Intern, 3 Customer, 6 Order 
