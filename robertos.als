@@ -149,10 +149,16 @@ fact onlyCookedPizzasInDelivery{
 	all p:Pizza | (p.isCooked = False) =>  False in (p.pizzaOrder.orderDelivery.canBeDelivered)
 }
 
+//Number 8, TODO: Keep one connection: O1->O2->O3
+fact noLoopsInNextOrder{
+	all o :Order | o.nextOrder != o && not (o->o in ^nextOrder)
+}
+
 
 fun numberOfGourmet[o: Order, b: Bool]: Int{
 	# (o.orderPizza <: isGourmet).b
 }
+
 
 /*
  * Predicates
