@@ -69,6 +69,7 @@ sig Delivery {
 //TODO: Next order
 sig Order {
 	isDelivered: one Bool,
+	isHead: one Bool, //jbj
 	orderCustomer: one Customer,
 	orderPizza: some Pizza,
 	orderChef: one Chef,
@@ -90,6 +91,7 @@ sig Pizza {
 	pizzaChef: set Chef, //Check that relation
 	pizzaOrder: one Order
 }
+
 
 
 //Better reading: Add <: instead of relation names, refactor to Name <: NameName2 to model Name->Name2
@@ -149,9 +151,13 @@ fact onlyCookedPizzasInDelivery{
 	all p:Pizza | (p.isCooked = False) =>  False in (p.pizzaOrder.orderDelivery.canBeDelivered)
 }
 
-//Number 8, TODO: Keep one connection: O1->O2->O3
+//Number 8, TODO: Check if correct
 fact noLoopsInNextOrder{
-	all o :Order | o.nextOrder != o && not (o->o in ^nextOrder)
+	all o: Order | o.nextOrder != o && not (o->o in ^nextOrder) && (one o.~nextOrder || o.isHead=True)
+}
+
+fact oneHead{
+	all o, o': Order | (o.isHead=True && o'.isHead=True) => o=o' 
 }
 
 
@@ -252,6 +258,6 @@ fun getDeliveredOrders[c: Customer, b: Bool] : set Order {
 
 
 run notPremium for 3 but exactly 4 Pizza, exactly 1 Customer
-run isPremiumCustomer for 3 but exactly 1 Customer, exactly 3 Order
+run isPremiumCustomer for 4 but exactly 2 Customer, exactly 4 Order
 run empty for 3 but exactly 1 Customer, exactly 1 Chef, exactly 1 Time, exactly 3 Order
 run notCooked for 3 but 1 Delivery, exactly 1 Order, exactly 3 Pizza
