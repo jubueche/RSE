@@ -18,74 +18,64 @@ one sig True extends Bool{}
 one sig False extends Bool{}
 
 abstract sig Employee { 
-	management: ManagementSystem
+	employeeManagementSystem: ManagementSystem
 }
 
 sig Intern extends Employee {
-	delivers: some Delivery,
+	internDelivery: some Delivery,
 	isChef: one Bool
 } {
-//delivers.deliveredBy = Intern
+//courierDelivery.deliveredEmployee = Intern
 }
 
 
 sig Chef extends Employee {
-	processOrder: set Order,
-	makes: some Pizza //Check that relation
+	chefOrder: set Order,
+	chefPizza: some Pizza //Check that relation
 }
 
 sig Courier extends Employee {
-	delivers: some Delivery
+	courierDelivery: some Delivery
 }
 
 one sig Manager {
-	analyses: one Analytics
+	managerAnalytics: one Analytics
 }
 
 sig Analytics {
-	managedByAnalytics: one Manager,
-	managedByManagementSystem: one ManagementSystem
+	analyticsManager: one Manager,
+	analyticsManagementSystem: one ManagementSystem
 }
 
 sig Customer {
 	isPremium: one Bool,
-	customerOrders: some Order //Ask composition
-} 
-
-//Better reading: Add <: instead of relation names
-fact SymmetricRelations {
-	~(Order <: orderedBy) = Customer <: customerOrders &&
-	~partOfDelivery = deliveryOrders &&
-	~deliveredBy = (Intern <: delivers + Courier <: delivers)  &&
-	~partOf = contains &&
-	~managedBy = manageOrders &&
-	~processedBy = processOrder &&
-	~madeBy = makes &&
-	~manageEmployees = management &&
-	~manageAnalytics = managedByManagementSystem &&
-	~analyses = managedByAnalytics
+	customerOrder: some Order //Ask composition
 }
 
 
 sig ManagementSystem {
-	manageEmployees: some Employee,
-	manageOrders: set Order,
-	manageAnalytics: one Analytics
+	managementSystemEmployee: some Employee,
+	managementSystemOrder: set Order,
+	managementSystemAnalytics: one Analytics
 }
 
 sig Delivery {
-	deliveredBy: one Courier +  Intern,
-	deliveryOrders: some Order
+	canBeDelivered: one Bool,
+	deliveredEmployee: one Courier +  Intern,
+	deliveryOrder: some Order,
+	deliveryTime: one Time
 } 
 
+//TODO: Next order
 sig Order {
-	orderedBy: one Customer,
-	contains: some Pizza,
-	processedBy: one Chef,
+	isDelivered: one Bool,
+	orderCustomer: one Customer,
+	orderPizza: some Pizza,
+	orderChef: one Chef,
 	nextOrder: lone Order, //TODO: Need to add acyclic constraint
-	partOfDelivery: one Delivery,
-	managedBy: one ManagementSystem,
-	delivered: one Bool
+	orderDelivery: one Delivery,
+	orderManagementSystem: one ManagementSystem,
+	orderTime: one Time
 }
 
 sig Time { }
@@ -95,11 +85,74 @@ sig Address {}
 sig Payment { }
 
 sig Pizza {
-madeBy: set Chef, //Check that relation
-isGourmet: one Bool,
-partOf: one Order
+	isCooked: one Bool,
+	isGourmet: one Bool,
+	pizzaChef: set Chef, //Check that relation
+	pizzaOrder: one Order
 }
 
+
+//Better reading: Add <: instead of relation names, refactor to Name <: NameName2 to model Name->Name2
+fact SymmetricRelations {
+	~(Order <: orderCustomer) = Customer <: customerOrder &&
+	~(Order <: orderDelivery) = Delivery <: deliveryOrder &&
+	~(Order <: orderManagementSystem) = ManagementSystem <: managementSystemOrder &&
+	~(Order <: orderChef) = Chef <: chefOrder &&
+	~(Pizza <: pizzaOrder) = Order <: orderPizza &&
+	~(Pizza <: pizzaChef) = Chef <: chefPizza &&
+	~(ManagementSystem <: managementSystemEmployee) = Employee <: employeeManagementSystem &&
+	~(ManagementSystem <: managementSystemAnalytics) = Analytics <: analyticsManagementSystem &&
+	~(Delivery <: deliveredEmployee) = (Intern <: internDelivery + Courier <: courierDelivery)  &&
+	~(Manager <: managerAnalytics) = Analytics <: analyticsManager
+}
+
+//Number 3
+fact ordersAtATime{
+	all c: Customer | let dO = # getDeliveredOrders[c,False] | 
+		c.isPremium = True => dO =< 2 else dO =< 1
+}
+
+//Number 4
+fact gourmetPizza{
+	all c: Customer | (True in c.customerOrder.orderPizza.isGourmet) => (c.isPremium = True)
+}
+
+//Number 5.1
+fact orderNormalOrPremium{
+	all o: Order | let 	
+		numG = numberOfGourmet[o,True] ,
+		numNotG = numberOfGourmet[o,False] |
+		numG = 1 && numNotG = 0 || numG = 0 && numNotG <= 3 && numNotG >= 1
+
+}
+
+//Number 5.2, Ask for timeOrder relation. Would need to add to sig and to symm. fact
+fact chefsHandleThreeMax{
+	all t: Time, c: Chef | # (t.~orderTime & c.chefOrder) =< 3
+}
+
+//Number 5.3
+fact internsHandleTwoMax{
+	all t: Time, i: Intern | # (t.~deliveryTime & i.internDelivery) =< 2
+}
+
+//Number 6.1
+fact deliveryUpToThreeOrders{
+	all d: Delivery | # d.deliveryOrder <= 3
+}
+
+//TODO: Ask about constraint no. 6
+
+//Number 7 
+fact onlyCookedPizzasInDelivery{
+	// p in Delivery.deliveryOrder.orderPizza
+	all p:Pizza | (p.isCooked = False) =>  False in (p.pizzaOrder.orderDelivery.canBeDelivered)
+}
+
+
+fun numberOfGourmet[o: Order, b: Bool]: Int{
+	# (o.orderPizza <: isGourmet).b
+}
 
 /*
  * Predicates
@@ -107,11 +160,23 @@ partOf: one Order
 
 pred empty { }
 
+pred notCooked[p: Pizza]{
+	p.isCooked = False
+}
+
+pred notPremium[c: Customer] {
+	c.isPremium = False
+}
+
 // True iff c is a premium customer.
-pred isPremiumCustomer[c : Customer] { }
+pred isPremiumCustomer[c : Customer] {
+	c.isPremium = True
+}
 
 // True iff p is a gourmet pizza.
-pred isGourmetPizza[p : Pizza] {  }
+pred isGourmetPizza[p : Pizza] {
+	p.isGourmet = True
+}
 
 // True iff c is carrying more than a single order in a delivery d.
 pred moreThanOneCourier[c: Courier] {  }
@@ -167,9 +232,20 @@ fun getPayment[c: Customer] : Payment {  }
 // Returns all the orders that are being cooked
 fun getAllBeingCookedOrders[m: ManagementSystem] : set Order {  } 
 
-// Returns all the orders that are being delivered
-fun getAllBeingDeliveredOrders[m: ManagementSystem] : set Order {  } 
-
 */
 
-run empty for 3 but exactly 4 Order, exactly 4 Pizza, 2 Analytics
+// Returns all the orders that are being delivered
+fun getAllBeingDeliveredOrders[m: ManagementSystem] : set Order {
+	(m.managementSystemOrder <: isDelivered).True
+}
+
+// Returns all the orders that are being delivered
+fun getDeliveredOrders[c: Customer, b: Bool] : set Order {
+	(c.customerOrder <: isDelivered).b
+}
+
+
+run notPremium for 3 but exactly 4 Pizza, exactly 1 Customer
+run isPremiumCustomer for 3 but exactly 1 Customer, exactly 3 Order
+run empty for 3 but exactly 1 Customer, exactly 1 Chef, exactly 1 Time, exactly 3 Order
+run notCooked for 3 but 1 Delivery, exactly 1 Order, exactly 3 Pizza
