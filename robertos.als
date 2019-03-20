@@ -19,61 +19,73 @@ one sig False extends Bool{}
 
 abstract sig Employee { 
 	management: ManagementSystem
-} 
+}
 
 sig Intern extends Employee {
-delivers: some Delivery,
-isChef: one Bool
+	delivers: some Delivery,
+	isChef: one Bool
 } {
 //delivers.deliveredBy = Intern
 }
 
 
 sig Chef extends Employee {
-processOrder: set Order,
-makes: some Pizza //Check that relation
+	processOrder: set Order,
+	makes: some Pizza //Check that relation
 }
 
 sig Courier extends Employee {
-delivers: some Delivery
-}{
-
+	delivers: some Delivery
 }
 
 one sig Manager {
-analyses: one Analytics
+	analyses: one Analytics
 }
 
 sig Analytics {
-manager: one Manager
+	managedByAnalytics: one Manager,
+	managedByManagementSystem: one ManagementSystem
 }
 
 sig Customer {
-isPremium: one Bool,
-customerOrders: some Order //Ask composition
-} {
-((isPremium in True && # delivered.False =< 2) || (isPremium in False && # delivered.False =< 1))	
+	isPremium: one Bool,
+	customerOrders: some Order //Ask composition
+} 
+
+//Better reading: Add <: instead of relation names
+fact SymmetricRelations {
+	~(Order <: orderedBy) = Customer <: customerOrders &&
+	~partOfDelivery = deliveryOrders &&
+	~deliveredBy = (Intern <: delivers + Courier <: delivers)  &&
+	~partOf = contains &&
+	~managedBy = manageOrders &&
+	~processedBy = processOrder &&
+	~madeBy = makes &&
+	~manageEmployees = management &&
+	~manageAnalytics = managedByManagementSystem &&
+	~analyses = managedByAnalytics
 }
 
-one sig ManagementSystem {
-manageEmploys: some Employee,
-manageOrders: set Order,
-manageAnalytics: one Analytics
+
+sig ManagementSystem {
+	manageEmployees: some Employee,
+	manageOrders: set Order,
+	manageAnalytics: one Analytics
 }
 
 sig Delivery {
-deliveredBy: one Courier +  Intern,
-deliveryOrders: some Order
-}
+	deliveredBy: one Courier +  Intern,
+	deliveryOrders: some Order
+} 
 
 sig Order {
-orderedBy: one Customer,
-containsOf: some Pizza,
-processedBy: one Chef,
-nextOrder: lone Order,
-deliveredBy: one Delivery,
-managedBy: one ManagementSystem,
-delivered: one Bool
+	orderedBy: one Customer,
+	contains: some Pizza,
+	processedBy: one Chef,
+	nextOrder: lone Order, //TODO: Need to add acyclic constraint
+	partOfDelivery: one Delivery,
+	managedBy: one ManagementSystem,
+	delivered: one Bool
 }
 
 sig Time { }
@@ -160,4 +172,4 @@ fun getAllBeingDeliveredOrders[m: ManagementSystem] : set Order {  }
 
 */
 
-run empty for 3 but 1 Chef, 1 Courier, 0 Intern, 3 Customer, 6 Order 
+run empty for 3 but exactly 4 Order, exactly 4 Pizza, 2 Analytics
