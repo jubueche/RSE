@@ -22,10 +22,9 @@ abstract sig Employee {
 }
 
 sig Intern extends Employee {
+	isChef: one Bool,
 	internDelivery: some Delivery,
-	isChef: one Bool
-} {
-//courierDelivery.deliveredEmployee = Intern
+	internOrder: set Order	
 }
 
 
@@ -66,20 +65,22 @@ sig Delivery {
 	deliveryTime: one Time
 } 
 
-//TODO: Next order
 sig Order {
 	isDelivered: one Bool,
-	isHead: one Bool, //jbj
+	isHead: one Bool,
 	orderCustomer: one Customer,
 	orderPizza: some Pizza,
 	orderChef: one Chef,
-	nextOrder: lone Order, //TODO: Need to add acyclic constraint
+	orderIntern: one Chef,
+	nextOrder: lone Order,
 	orderDelivery: one Delivery,
 	orderManagementSystem: one ManagementSystem,
 	orderTime: one Time
 }
 
-sig Time { }
+sig Time {
+	t: Int
+}
 
 sig Address {}
 
@@ -93,19 +94,28 @@ sig Pizza {
 }
 
 
-
-//Better reading: Add <: instead of relation names, refactor to Name <: NameName2 to model Name->Name2
+//TODO: Order can be made only by CHEF or INTERN, not by both
 fact SymmetricRelations {
 	~(Order <: orderCustomer) = Customer <: customerOrder &&
 	~(Order <: orderDelivery) = Delivery <: deliveryOrder &&
 	~(Order <: orderManagementSystem) = ManagementSystem <: managementSystemOrder &&
 	~(Order <: orderChef) = Chef <: chefOrder &&
+	~(Order <: orderIntern) = Intern <: internOrder &&
 	~(Pizza <: pizzaOrder) = Order <: orderPizza &&
 	~(Pizza <: pizzaChef) = Chef <: chefPizza &&
 	~(ManagementSystem <: managementSystemEmployee) = Employee <: employeeManagementSystem &&
 	~(ManagementSystem <: managementSystemAnalytics) = Analytics <: analyticsManagementSystem &&
 	~(Delivery <: deliveredEmployee) = (Intern <: internDelivery + Courier <: courierDelivery)  &&
 	~(Manager <: managerAnalytics) = Analytics <: analyticsManager
+}
+
+fact internNoDeliveryWhenChef{
+	all i: Intern | True in i.isChef => # i.internDelivery = 0 &&
+	False in i.isChef => # i.internOrder = 0
+}
+
+fact orderEitherByChefOrIntern{
+	all o: Order | # o.orderIntern + o.orderChef = 1
 }
 
 //Number 3
@@ -191,25 +201,39 @@ pred isGourmetPizza[p : Pizza] {
 }
 
 // True iff c is carrying more than a single order in a delivery d.
-pred moreThanOneCourier[c: Courier] {  }
+pred moreThanOneCourier[c: Courier] {
+	all d: Delivery | # d.(c.courierDelivery <: deliveryOrder) > 1
+}
 
 // True iff i is carrying more than a single order in a delivery d.
-pred moreThanOneInternCourier[i: Intern] { }
+pred moreThanOneInternCourier[i: Intern] {
+	all d: Delivery | # d.(i.internDelivery <: deliveryOrder) > 1
+}
 
 // True iff c is cooking more than a single order 
-pred moreThanOneChef[c: Chef] {  }
+pred moreThanOneChef[c: Chef] {
+	# c.chefOrder > 1
+}
 
 // True iff i is cooking more than a single order
-pred moreThanOneInternCook[i: Intern] {  }
+pred moreThanOneInternCook[i: Intern] {
+	# i.internOrder > 1
+}
 
-// True iff i is a piazza delivering intern
-pred isDeliveringIntern[i : Intern] {  }
+// True iff i is a pizza delivering intern
+pred isDeliveringIntern[i : Intern] {
+	False = i.isChef
+}
 
 // True iff o1 is ordered before o2
-pred orderIsBefore[o1, o2: Order] {  }
+pred orderIsBefore[o1, o2: Order] {
+	isBefore[o1.orderTime, o2.orderTime]
+}
 
 // True iff t1 is strictly before t2.
-pred isBefore[t1, t2: Time] {  }
+pred isBefore[t1, t2: Time] {
+	t1.t < t2.t
+}
 
 
 /*
@@ -260,4 +284,5 @@ fun getDeliveredOrders[c: Customer, b: Bool] : set Order {
 run notPremium for 3 but exactly 4 Pizza, exactly 1 Customer
 run isPremiumCustomer for 4 but exactly 2 Customer, exactly 4 Order
 run empty for 3 but exactly 1 Customer, exactly 1 Chef, exactly 1 Time, exactly 3 Order
-run notCooked for 3 but 1 Delivery, exactly 1 Order, exactly 3 Pizza
+run notCooked for 3 but exactly 1 Courier, exactly 3 Order, exactly 2 Delivery, exactly 0 Intern
+run moreThanOneCourier for 3 but exactly 1 Courier, exactly 1 Delivery, 2 Order

@@ -45,7 +45,7 @@ sig Customer {
 	isPremium: one Bool,
 	orders:  some Order 
 } {
-	isPremium = False && #orders <= 2 
+	isPremium = False && # orders <= 2 
 }
 
 one sig ManagementSystem { 
