@@ -71,7 +71,7 @@ sig Order {
 	orderCustomer: one Customer,
 	orderPizza: some Pizza,
 	orderChef: one Chef,
-	orderIntern: one Chef,
+	orderIntern: one Intern,
 	nextOrder: lone Order,
 	orderDelivery: one Delivery,
 	orderManagementSystem: one ManagementSystem,
@@ -100,7 +100,7 @@ fact SymmetricRelations {
 	~(Order <: orderDelivery) = Delivery <: deliveryOrder &&
 	~(Order <: orderManagementSystem) = ManagementSystem <: managementSystemOrder &&
 	~(Order <: orderChef) = Chef <: chefOrder &&
-	~(Order <: orderIntern) = Intern <: internOrder &&
+	//~(Order <: orderIntern) = Intern <: internOrder &&
 	~(Pizza <: pizzaOrder) = Order <: orderPizza &&
 	~(Pizza <: pizzaChef) = Chef <: chefPizza &&
 	~(ManagementSystem <: managementSystemEmployee) = Employee <: employeeManagementSystem &&
@@ -109,14 +109,16 @@ fact SymmetricRelations {
 	~(Manager <: managerAnalytics) = Analytics <: analyticsManager
 }
 
+/*
 fact internNoDeliveryWhenChef{
 	all i: Intern | True in i.isChef => # i.internDelivery = 0 &&
 	False in i.isChef => # i.internOrder = 0
-}
+} */
 
+/*
 fact orderEitherByChefOrIntern{
 	all o: Order | # o.orderIntern + o.orderChef = 1
-}
+}*/
 
 //Number 3
 fact ordersAtATime{
@@ -153,11 +155,15 @@ fact deliveryUpToThreeOrders{
 	all d: Delivery | # d.deliveryOrder <= 3
 }
 
-//TODO: Ask about constraint no. 6
+/*
+fact deliveredByTwoInternOrOneCourierOrOneInternAndOneCourier{
+	all o: Order | ((# o.orderDelivery.~internDelivery = 1) => (#o.orderDelivery.~courierDelivery = 1)) ||
+		((# o.orderDelivery.~internDelivery = 2) => (# o.orderDelivery.~courierDelivery = 0)) ||
+		((# o.orderDelivery.~internDelivery = 0) => (# o.orderDelivery.~courierDelivery = 1))
+}*/
 
 //Number 7 
 fact onlyCookedPizzasInDelivery{
-	// p in Delivery.deliveryOrder.orderPizza
 	all p:Pizza | (p.isCooked = False) =>  False in (p.pizzaOrder.orderDelivery.canBeDelivered)
 }
 
@@ -284,5 +290,5 @@ fun getDeliveredOrders[c: Customer, b: Bool] : set Order {
 run notPremium for 3 but exactly 4 Pizza, exactly 1 Customer
 run isPremiumCustomer for 4 but exactly 2 Customer, exactly 4 Order
 run empty for 3 but exactly 1 Customer, exactly 1 Chef, exactly 1 Time, exactly 3 Order
-run notCooked for 3 but exactly 1 Courier, exactly 3 Order, exactly 2 Delivery, exactly 0 Intern
-run moreThanOneCourier for 3 but exactly 1 Courier, exactly 1 Delivery, 2 Order
+run notCooked for 3 but exactly 1 Courier, 3 Order, 2 Delivery, exactly 0 Intern
+run moreThanOneCourier for 3
