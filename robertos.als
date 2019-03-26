@@ -22,20 +22,18 @@ abstract sig Employee {
 }
 
 sig Intern extends Employee {
-	internDelivery: some Delivery,
-	isChef: one Bool
-} {
-//courierDelivery.deliveredEmployee = Intern
+	isChef: one Bool,
+	internDelivery: one Delivery,
+	internOrder: set Order
 }
 
 
 sig Chef extends Employee {
-	chefOrder: set Order,
-	chefPizza: some Pizza //Check that relation
+	chefOrder: set Order
 }
 
 sig Courier extends Employee {
-	courierDelivery: some Delivery
+	courierDelivery: one Delivery
 }
 
 one sig Manager {
@@ -61,34 +59,34 @@ sig ManagementSystem {
 
 sig Delivery {
 	canBeDelivered: one Bool,
-	deliveredEmployee: one Courier +  Intern,
-	deliveryOrder: some Order,
-	deliveryTime: one Time
+	isDelivered: one Bool,
+	deliveredEmployee: some Courier +  Intern,
+	deliveryOrder: some Order
 } 
 
 //TODO: Next order
 sig Order {
-	isDelivered: one Bool,
-	isHead: one Bool, //jbj
+	isCompleted: one Bool,
+	isHead: one Bool,
 	orderCustomer: one Customer,
 	orderPizza: some Pizza,
-	orderChef: one Chef,
+	orderChef: lone Chef,
+	orderIntern: lone Intern,
 	nextOrder: lone Order, //TODO: Need to add acyclic constraint
+	previousOrder: lone Order,
 	orderDelivery: one Delivery,
 	orderManagementSystem: one ManagementSystem,
 	orderTime: one Time
 }
 
-sig Time { }
+sig Time { 
+	value: Int
+}
 
-sig Address {}
-
-sig Payment { }
 
 sig Pizza {
 	isCooked: one Bool,
 	isGourmet: one Bool,
-	pizzaChef: set Chef, //Check that relation
 	pizzaOrder: one Order
 }
 
@@ -101,7 +99,6 @@ fact SymmetricRelations {
 	~(Order <: orderManagementSystem) = ManagementSystem <: managementSystemOrder &&
 	~(Order <: orderChef) = Chef <: chefOrder &&
 	~(Pizza <: pizzaOrder) = Order <: orderPizza &&
-	~(Pizza <: pizzaChef) = Chef <: chefPizza &&
 	~(ManagementSystem <: managementSystemEmployee) = Employee <: employeeManagementSystem &&
 	~(ManagementSystem <: managementSystemAnalytics) = Analytics <: analyticsManagementSystem &&
 	~(Delivery <: deliveredEmployee) = (Intern <: internDelivery + Courier <: courierDelivery)  &&
@@ -134,9 +131,9 @@ fact chefsHandleThreeMax{
 }
 
 //Number 5.3
-fact internsHandleTwoMax{
-	all t: Time, i: Intern | # (t.~deliveryTime & i.internDelivery) =< 2
-}
+/*fact internsHandleTwoMax{
+	all i: Intern | # i.internOrder <: isCooked =< 2
+}*/
 
 //Number 6.1
 fact deliveryUpToThreeOrders{
@@ -261,3 +258,5 @@ run notPremium for 3 but exactly 4 Pizza, exactly 1 Customer
 run isPremiumCustomer for 4 but exactly 2 Customer, exactly 4 Order
 run empty for 3 but exactly 1 Customer, exactly 1 Chef, exactly 1 Time, exactly 3 Order
 run notCooked for 3 but 1 Delivery, exactly 1 Order, exactly 3 Pizza
+
+run empty for 3
