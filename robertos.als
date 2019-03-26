@@ -1,18 +1,3 @@
-/*
- * Signatures
- *
- * Your model should contain the following (and potentially other) signatures.
- * If necessary, you have to make some of the signatures abstract and
- * make them extend other signatures.
- * 
- */
-
- /*
- *  Hints: You may need to define a Bool signature when crafting the following sig. 
- *  Consider searching online to find tutorials on this topic.
- *  
- */
-
 abstract sig Bool{}
 one sig True extends Bool{}
 one sig False extends Bool{}
@@ -26,7 +11,6 @@ sig Intern extends Employee {
 	internDelivery: lone Delivery,
 	internOrder: set Order
 }
-
 
 sig Chef extends Employee {
 	chefOrder: set Order
@@ -47,9 +31,8 @@ sig Analytics {
 
 sig Customer {
 	isPremium: one Bool,
-	customerOrder: some Order //Ask composition
+	customerOrder: some Order
 }
-
 
 sig ManagementSystem {
 	managementSystemEmployee: some Employee,
@@ -60,11 +43,10 @@ sig ManagementSystem {
 sig Delivery {
 	canBeDelivered: one Bool,
 	isDelivered: one Bool,
-	deliveredEmployee: some Courier +  Intern,
+	deliveryEmployee: some Courier +  Intern,
 	deliveryOrder: some Order
 }
 
-//TODO: Next order
 sig Order {
 	isCompleted: one Bool,
 	isHead: one Bool,
@@ -76,12 +58,19 @@ sig Order {
 	previousOrder: lone Order,
 	orderDelivery: one Delivery,
 	orderManagementSystem: one ManagementSystem,
-	orderTime: one Time
+	startTime: one Time,
+	endTime: one Time,
+	orderPayment: one Payment,
+	orderAddress: one Address
 }
 
 fact pOrder{
 	previousOrder = ~nextOrder
 }
+
+sig Payment { }
+
+sig Address { }
 
 sig Time { 
 	t: Int
@@ -94,9 +83,6 @@ sig Pizza {
 	pizzaOrder: one Order
 }
 
-
-
-//Better reading: Add <: instead of relation names, refactor to Name <: NameName2 to model Name->Name2
 fact SymmetricRelations {
 	~(Order <: orderCustomer) = Customer <: customerOrder &&
 	~(Order <: orderDelivery) = Delivery <: deliveryOrder &&
@@ -106,7 +92,7 @@ fact SymmetricRelations {
 	~(Pizza <: pizzaOrder) = Order <: orderPizza &&
 	~(ManagementSystem <: managementSystemEmployee) = Employee <: employeeManagementSystem &&
 	~(ManagementSystem <: managementSystemAnalytics) = Analytics <: analyticsManagementSystem &&
-	~(Delivery <: deliveredEmployee) = (Intern <: internDelivery + Courier <: courierDelivery)  &&
+	~(Delivery <: deliveryEmployee) = (Intern <: internDelivery + Courier <: courierDelivery)  &&
 	~(Manager <: managerAnalytics) = Analytics <: analyticsManager
 }
 
@@ -156,11 +142,10 @@ fact deliveryUpToThreeOrders{
 
 //Number 6.2
 fact deliveredByConstraint{
-	all d: Delivery | let dI = # d.deliveredEmployee & Intern
-					| let dC =  # d.deliveredEmployee & Courier
+	all d: Delivery | let dI = # d.deliveryEmployee & Intern
+					| let dC =  # d.deliveryEmployee & Courier
 					| (dC = 0) => (dI = 0 || # dI = 2) && (dC = 1) => (dI <= 1)
 }
-
 
 //Number 7 
 fact onlyCookedPizzasInDelivery{
@@ -176,17 +161,8 @@ fact oneHead{
 	all o, o': Order | (o.isHead=True && o'.isHead=True) => o=o' 
 }
 
-
 fact handledIfPreceedingHandled{
 	all o,o' :Order | (isHandled[o] && o' in o.^previousOrder) => isHandled[o']
-}
-
-pred isHandled[o:Order] {
-	# (o.orderChef + o.orderIntern) > 0
-}
-
-fun numberOfGourmet[o: Order, b: Bool]: Int{
-	# (o.orderPizza <: isGourmet).b
 }
 
 
@@ -195,6 +171,10 @@ fun numberOfGourmet[o: Order, b: Bool]: Int{
  */
 
 pred empty { }
+
+pred isHandled[o:Order] {
+	# (o.orderChef + o.orderIntern) > 0
+}
 
 pred notCooked[p: Pizza]{
 	p.isCooked = False
@@ -241,7 +221,7 @@ pred isDeliveringIntern[i : Intern] {
 
 // True iff o1 is ordered before o2
 pred orderIsBefore[o1, o2: Order] {
-	isBefore[o1.orderTime, o2.orderTime]
+	isBefore[o1.startTime, o2.startTime]
 }
 
 // True iff t1 is strictly before t2.
@@ -254,40 +234,60 @@ pred isBefore[t1, t2: Time] {
  * Functions
  */
 
-/*
+fun numberOfGourmet[o: Order, b: Bool]: Int{
+	# (o.orderPizza <: isGourmet).b
+}
+
 // Returns all the orders which are being cooked by chef c
-fun getAllOrders[c: Chef] : set Order {  }
+fun getAllOrders[c: Chef] : set Order {
+	(c.chefOrder <: orderPizza.isCooked).False
+}
 
 // Returns all the orders which are being delivered by courier c
-fun getAllOrdersFromCourier[c: Courier] : set Order {  }
+fun getAllOrdersFromCourier[c: Courier] : set Order {
+	(c.courierDelivery.deliveryOrder <: orderDelivery.isDelivered).False
+}
 
 // Returns all the orders which are being delivered by intern i
-fun getAllOrdersFromInternDelivery[i: Intern] : set Order {  }
+fun getAllOrdersFromInternDelivery[i: Intern] : set Order {
+	(i.internDelivery.deliveryOrder <: orderDelivery.isDelivered).False
+}
 
 // Returns all the orders which are being cooked by intern i
-fun getAllOrdersFromInternCooked[i: Intern] : set Order {  }
+fun getAllOrdersFromInternCooked[i: Intern] : set Order {
+	(i.internOrder <: orderPizza.isCooked).False
+}
 
 // Returns the start time of order o
-fun getStart[o : Order] : Time {  }
+fun getStart[o : Order] : Time {
+	o.startTime
+}
 
 // Returns the end time of order o
-fun getEnd[o: Order] : Time {  }
+fun getEnd[o: Order] : Time {
+	o.endTime
+}
 
 // Returns the delivery address of order o
-fun getDeliveryAddr[o: Order] : Address {  } 
+fun getDeliveryAddr[o: Order] : Address {
+	o.orderAddress
+} 
 
 // Returns the payment information of customer c
-fun getPayment[c: Customer] : Payment {  } 
+fun getPayment[c: Customer] : Payment {
+	c.customerOrder.orderPayment
+} 
 
 // Returns all the orders that are being cooked
-fun getAllBeingCookedOrders[m: ManagementSystem] : set Order {  } 
+fun getAllBeingCookedOrders[m: ManagementSystem] : set Order {
+	(m.managementSystemOrder <: orderPizza.isCooked).False
+} 
 
-*/
 
 // Returns all the orders that are being delivered
-/*fun getAllBeingDeliveredOrders[m: ManagementSystem] : set Order {
-	(m.managementSystemOrder <: isDelivered).True
-}*/
+fun getAllBeingDeliveredOrders[m: ManagementSystem] : set Order {
+	(m.managementSystemOrder <: orderDelivery.deliveryEmployee).Employee - (m.managementSystemOrder  <: orderDelivery.isDelivered).True
+}
 
 // Returns all the orders that are being delivered
 fun getDeliveredOrders[c: Customer, b: Bool] : set Order {
@@ -295,8 +295,4 @@ fun getDeliveredOrders[c: Customer, b: Bool] : set Order {
 }
 
 
-run notPremium for 3 but exactly 4 Pizza, exactly 1 Customer
-run isPremiumCustomer for 4 but exactly 2 Customer, exactly 4 Order
-run empty for 3 but exactly 1 Customer, exactly 1 Chef, exactly 1 Time, exactly 3 Order
-run notCooked for 3 but 1 Delivery, exactly 1 Order, exactly 3 Pizza
-run empty for 3
+run empty for 3 but exactly 4 Chef, exactly 3 Courier, exactly 1 Manager, exactly 2 Intern, exactly 1 ManagementSystem
