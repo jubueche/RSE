@@ -18,7 +18,7 @@ sig Chef extends Employee {
 }
 
 sig Courier extends Employee {
-	courierDelivery: one Delivery
+	courierDelivery: lone Delivery
 }
 
 one sig Manager {
@@ -69,7 +69,7 @@ sig Payment { }
 
 sig Address { }
 
-sig Time { 
+sig Time {
 	t: Int
 }
 
@@ -112,6 +112,18 @@ fact pOrder{
 	previousOrder = ~nextOrder
 }
 
+fact startBeforeEnd {
+	all o: Order | o.startTime.t < o.endTime.t
+}
+
+fact uniqueTime {
+	all o, o': Order | (o.startTime = o'.startTime || 
+						o.startTime = o'.endTime || 
+						o.endTime = o'.startTime || 
+						o.endTime = o'.endTime) 
+						=> o=o'
+}
+
 fact startTimeOrder {
 	all o, o': Order | o.startTime.t < o'.startTime.t => o' in o.^nextOrder
 }
@@ -122,6 +134,14 @@ fact deliverable {
 
 fact delivered {
 	all d: Delivery | d.isDelivered=True => d.canBeDelivered=True
+}
+
+fact positiveTime {
+	all ti: Time | ti.t > 0
+}
+
+fact noSingleInstances {
+	Time = Order.(startTime + endTime) && Address = Order.orderAddress && Payment = Order.orderPayment
 }
 
 /*
@@ -165,9 +185,9 @@ fact deliveryUpToThreeOrders{
 
 //Number 6.2
 fact deliveredByConstraint{
-	all d: Delivery | let dI = # d.deliveryEmployee & Intern
-					| let dC =  # d.deliveryEmployee & Courier
-					| (dC = 0) => (dI = 0 || # dI = 2) && (dC = 1) => (dI <= 1)
+	all d: Delivery | let dI = # (d.deliveryEmployee & Intern)
+					| let dC =  # (d.deliveryEmployee & Courier)
+					| (dC = 0 => (dI = 0 || dI = 2)) && (dC = 1 => (dI <= 1)) && dC <= 1
 }
 
 //Number 7 
