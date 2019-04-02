@@ -9,7 +9,8 @@ abstract sig Employee {
 
 sig Intern extends Employee {
 	isCooking: one Bool, // isCooking if intern acts as a Chef
-	internDelivery: lone Delivery,
+	internDelivery: lone Delivery, // different from the UML
+								   // intern can exist without delivery
 	internOrder: set Order
 }
 
@@ -18,7 +19,8 @@ sig Chef extends Employee {
 }
 
 sig Courier extends Employee {
-	courierDelivery: lone Delivery
+	courierDelivery: lone Delivery // different from the UML
+								   // courier can exist without delivery
 }
 
 one sig Manager {
@@ -104,6 +106,10 @@ fact orderEitherByChefOrIntern{
 	all o: Order | # (o.orderIntern + o.orderChef) <= 1
 }
 
+fact pizzasCooked {
+	all p: Pizza | p.isCooked=True => #(p.pizzaOrder.orderIntern + p.pizzaOrder.orderChef) = 1
+}
+
 fact orderCompleted {
 	all o: Order, p: o.orderPizza | o.isCompleted=True => p.isCooked=True
 }
@@ -114,14 +120,6 @@ fact pOrder{
 
 fact startBeforeEnd {
 	all o: Order | o.startTime.t < o.endTime.t
-}
-
-fact uniqueTime {
-	all o, o': Order | (o.startTime = o'.startTime || 
-						o.startTime = o'.endTime || 
-						o.endTime = o'.startTime || 
-						o.endTime = o'.endTime) 
-						=> o=o'
 }
 
 fact startTimeOrder {
@@ -338,4 +336,4 @@ fun getDeliveredOrders[c: Customer, b: Bool] : set Order {
 }
 
 
-run empty for 3 but exactly 4 Chef, exactly 3 Courier, exactly 1 Manager, exactly 2 Intern, exactly 1 ManagementSystem
+run empty for 3 but exactly 4 Chef, exactly 3 Courier, exactly 1 Manager, exactly 2 Intern, exactly 1 ManagementSystem, exactly 3 Order
