@@ -7,7 +7,7 @@ abstract sig Employee {
 }
 
 sig Intern extends Employee {
-	isChef: one Bool,
+	isCooking: one Bool,
 	internDelivery: lone Delivery,
 	internOrder: set Order
 }
@@ -97,8 +97,8 @@ fact SymmetricRelations {
 }
 
 fact internNoDeliveryWhenChef{
-	all i: Intern | True in i.isChef => # i.internDelivery = 0 &&
-	False in i.isChef => # i.internOrder = 0
+	all i: Intern | True in i.isCooking => # i.internDelivery = 0 &&
+	False in i.isCooking => # i.internOrder = 0
 }
 
 fact orderEitherByChefOrIntern{
@@ -216,7 +216,7 @@ pred moreThanOneInternCook[i: Intern] {
 
 // True iff i is a piazza delivering intern
 pred isDeliveringIntern[i : Intern] {
-	i.isChef = False
+	i.isCooking = False
 }
 
 // True iff o1 is ordered before o2
