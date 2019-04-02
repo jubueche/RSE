@@ -95,8 +95,8 @@ fact SymmetricRelations {
 }
 
 fact internNoDeliveryWhenChef {
-	all i: Intern | i.isCooking=True => #i.internDelivery=0 &&
-	i.isCooking=False => #i.internOrder=0
+	all i: Intern | (i.isCooking=True => #i.internDelivery=0) &&
+	(i.isCooking=False => #i.internOrder=0)
 }
 
 //  orders are handled by exactly one chef or intern
