@@ -103,7 +103,7 @@ fact orderEitherByChefOrIntern{
 }
 
 fact orderCompleted {
-	all o: Order, p: o.orderPizza | o.isCompleted => p.isCooked
+	all o: Order, p: o.orderPizza | o.isCompleted=True => p.isCooked=True
 }
 
 fact pOrder{
@@ -115,7 +115,7 @@ fact startTimeOrder {
 }
 
 fact deliverable {
-	all d: Delivery, o: d.deliveryOrder | d.canBeDelivered => o.isCompleted
+	all d: Delivery, o: d.deliveryOrder | d.canBeDelivered=True => o.isCompleted=True
 }
 
 //Number 3
