@@ -111,7 +111,7 @@ fact pOrder{
 }
 
 fact startTimeOrder {
-	all o, o': Order | o.startTime < o'.startTime => o' in o.^nextOrder
+	all o, o': Order | o.startTime.t < o'.startTime.t => o' in o.^nextOrder
 }
 
 fact deliverable {
