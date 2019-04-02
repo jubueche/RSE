@@ -118,6 +118,10 @@ fact deliverable {
 	all d: Delivery, o: d.deliveryOrder | d.canBeDelivered=True => o.isCompleted=True
 }
 
+fact delivered {
+	all d: Delivery | d.isDelivered=True => d.canBeDelivered=True
+}
+
 //Number 3
 fact ordersAtATime{
 	all c: Customer | let dO = # getDeliveredOrders[c,False] | 
