@@ -8,7 +8,7 @@ abstract sig Employee {
 }
 
 sig Intern extends Employee {
-	isChef: one Bool,
+	isCooking: one Bool, // isCooking if intern acts as a Chef
 	internDelivery: lone Delivery,
 	internOrder: set Order
 }
@@ -42,14 +42,14 @@ sig ManagementSystem {
 }
 
 sig Delivery {
-	canBeDelivered: one Bool,
-	isDelivered: one Bool,
+	canBeDelivered: one Bool, // if all orders in delivery are completed
+	isDelivered: one Bool, // delivery is finished
 	deliveryEmployee: some Courier +  Intern,
 	deliveryOrder: some Order
 }
 
 sig Order {
-	isCompleted: one Bool,
+	isCompleted: one Bool, // if all pizzas in order are cooked
 	isHead: one Bool,
 	orderCustomer: one Customer,
 	orderPizza: some Pizza,
@@ -59,14 +59,10 @@ sig Order {
 	previousOrder: lone Order,
 	orderDelivery: one Delivery,
 	orderManagementSystem: one ManagementSystem,
-	startTime: one Time,
+	startTime: one Time, 
 	endTime: one Time,
 	orderPayment: one Payment,
 	orderAddress: one Address
-}
-
-fact pOrder{
-	previousOrder = ~nextOrder
 }
 
 sig Payment { }
@@ -79,7 +75,7 @@ sig Time {
 
 
 sig Pizza {
-	isCooked: one Bool,
+	isCooked: one Bool, //
 	isGourmet: one Bool,
 	pizzaOrder: one Order
 }
@@ -100,10 +96,11 @@ fact SymmetricRelations {
 
 // Enfornces the fact that an intern if is a chef (isCooking = True) it cannot also be an intern. 
 fact internNoDeliveryWhenChef{
-	all i: Intern | True in i.isChef => # i.internDelivery = 0 &&
-	False in i.isChef => # i.internOrder = 0
+	all i: Intern | True in i.isCooking => # i.internDelivery = 0 &&
+	False in i.isCooking => # i.internOrder = 0
 }
 
+//  orders are handled by exactly one chef or intern
 fact orderEitherByChefOrIntern{
 	all o: Order | # (o.orderIntern + o.orderChef) <= 1
 }
@@ -223,7 +220,7 @@ pred moreThanOneInternCook[i: Intern] {
 
 // True iff i is a piazza delivering intern
 pred isDeliveringIntern[i : Intern] {
-	i.isChef = False
+	i.isCooking = False
 }
 
 // True iff o1 is ordered before o2
