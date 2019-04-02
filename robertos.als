@@ -1,3 +1,4 @@
+// Bool signature used for boolean relations.
 abstract sig Bool{}
 one sig True extends Bool{}
 one sig False extends Bool{}
@@ -79,6 +80,7 @@ sig Pizza {
 	pizzaOrder: one Order
 }
 
+// Enforces the fact that all relationships must be symmetric 
 fact SymmetricRelations {
 	~(Order <: orderCustomer) = Customer <: customerOrder &&
 	~(Order <: orderDelivery) = Delivery <: deliveryOrder &&
@@ -122,18 +124,22 @@ fact delivered {
 	all d: Delivery | d.isDelivered=True => d.canBeDelivered=True
 }
 
-//Number 3
+/*
+ *  Facts for TASK 3-8.
+ */ 
+
+// Number 3
 fact ordersAtATime{
 	all c: Customer | let dO = # getDeliveredOrders[c,False] | 
 		c.isPremium = True => dO =< 2 else dO =< 1
 }
 
-//Number 4
+// Number 4
 fact gourmetPizza{
 	all c: Customer | (True in c.customerOrder.orderPizza.isGourmet) => (c.isPremium = True)
 }
 
-//Number 5.1
+// Number 5.1
 fact orderNormalOrPremium{
 	all o: Order | let 	
 		numG = numberOfGourmet[o,True] ,
@@ -142,17 +148,17 @@ fact orderNormalOrPremium{
 
 }
 
-//Number 5.2
+// Number 5.2
 fact chefsHandleThreeMax{
 	all c: Chef | # (c.chefOrder <: isCompleted.False) =< 3
 }
 
-//Number 5.3
+// Number 5.3
 fact internsHandleTwoMax{
 	all i: Intern | # (i.internOrder <: isCompleted.False) =< 2
 }
 
-//Number 6.1
+// Number 6.1
 fact deliveryUpToThreeOrders{
 	all d: Delivery | # d.deliveryOrder <= 3
 }
@@ -184,7 +190,7 @@ fact handledIfPreceedingHandled{
 
 
 /*
- * Predicates
+ * Predicates used for testing 
  */
 
 pred empty { }
