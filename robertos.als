@@ -7,7 +7,7 @@ abstract sig Employee {
 }
 
 sig Intern extends Employee {
-	isCooking: one Bool,
+	isCooking: one Bool, // isCooking if intern acts as a Chef
 	internDelivery: lone Delivery,
 	internOrder: set Order
 }
@@ -41,14 +41,14 @@ sig ManagementSystem {
 }
 
 sig Delivery {
-	canBeDelivered: one Bool,
-	isDelivered: one Bool,
+	canBeDelivered: one Bool, // 
+	isDelivered: one Bool, // 
 	deliveryEmployee: some Courier +  Intern,
 	deliveryOrder: some Order
 }
 
 sig Order {
-	isCompleted: one Bool,
+	isCompleted: one Bool, //
 	isHead: one Bool,
 	orderCustomer: one Customer,
 	orderPizza: some Pizza,
@@ -58,7 +58,7 @@ sig Order {
 	previousOrder: lone Order,
 	orderDelivery: one Delivery,
 	orderManagementSystem: one ManagementSystem,
-	startTime: one Time,
+	startTime: one Time, 
 	endTime: one Time,
 	orderPayment: one Payment,
 	orderAddress: one Address
@@ -78,7 +78,7 @@ sig Time {
 
 
 sig Pizza {
-	isCooked: one Bool,
+	isCooked: one Bool, //
 	isGourmet: one Bool,
 	pizzaOrder: one Order
 }
@@ -96,11 +96,12 @@ fact SymmetricRelations {
 	~(Manager <: managerAnalytics) = Analytics <: analyticsManager
 }
 
-fact internNoDeliveryWhenChef{
+fact internNoDeliveryWhenChef {
 	all i: Intern | True in i.isCooking => # i.internDelivery = 0 &&
 	False in i.isCooking => # i.internOrder = 0
 }
 
+// 
 fact orderEitherByChefOrIntern{
 	all o: Order | # (o.orderIntern + o.orderChef) <= 1
 }
