@@ -41,14 +41,14 @@ sig ManagementSystem {
 }
 
 sig Delivery {
-	canBeDelivered: one Bool, // 
-	isDelivered: one Bool, // 
+	canBeDelivered: one Bool, // if all orders in delivery are completed
+	isDelivered: one Bool, // delivery is finished
 	deliveryEmployee: some Courier +  Intern,
 	deliveryOrder: some Order
 }
 
 sig Order {
-	isCompleted: one Bool, //
+	isCompleted: one Bool, // if all pizzas in order are cooked
 	isHead: one Bool,
 	orderCustomer: one Customer,
 	orderPizza: some Pizza,
@@ -62,10 +62,6 @@ sig Order {
 	endTime: one Time,
 	orderPayment: one Payment,
 	orderAddress: one Address
-}
-
-fact pOrder{
-	previousOrder = ~nextOrder
 }
 
 sig Payment { }
@@ -101,9 +97,25 @@ fact internNoDeliveryWhenChef {
 	False in i.isCooking => # i.internOrder = 0
 }
 
-// 
+//  orders are handled by exactly one chef or intern
 fact orderEitherByChefOrIntern{
 	all o: Order | # (o.orderIntern + o.orderChef) <= 1
+}
+
+fact orderCompleted {
+	all o: Order, p: o.orderPizza | o.isCompleted => p.isCooked
+}
+
+fact pOrder{
+	previousOrder = ~nextOrder
+}
+
+fact startTimeOrder {
+	all o, o': Order | o.startTime < o'.startTime => o' in o.^nextOrder
+}
+
+fact deliverable {
+	all d: Delivery, o: d.deliveryOrder | d.canBeDelivered => o.isCompleted
 }
 
 //Number 3
