@@ -122,6 +122,14 @@ fact startBeforeEnd {
 	all o: Order | o.startTime.t < o.endTime.t
 }
 
+fact uniqueTime {
+	all o, o': Order | (o.startTime.t = o'.startTime.t || 
+						o.startTime.t = o'.endTime.t || 
+						o.endTime.t = o'.startTime.t || 
+						o.endTime.t = o'.endTime.t) 
+						=> o=o'
+}
+
 fact startTimeOrder {
 	all o, o': Order | o.startTime.t < o'.startTime.t => o' in o.^nextOrder
 }
@@ -336,4 +344,4 @@ fun getDeliveredOrders[c: Customer, b: Bool] : set Order {
 }
 
 
-run empty for 3 but exactly 4 Chef, exactly 3 Courier, exactly 1 Manager, exactly 2 Intern, exactly 1 ManagementSystem, exactly 3 Order
+run empty for 7 but exactly 5 Chef, exactly 5 Courier, exactly 3 Intern, exactly 3 Delivery
