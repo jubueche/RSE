@@ -114,6 +114,10 @@ fact orderCompleted {
 	all o: Order, p: o.orderPizza | o.isCompleted=True => p.isCooked=True
 }
 
+fact orderCompleted2 {
+	all o: Order | #(o.orderPizza <: isCooked).False=0 => o.isCompleted=True
+}
+
 fact pOrder{
 	previousOrder = ~nextOrder
 }
@@ -258,7 +262,7 @@ pred moreThanOneChef[c: Chef] {
 	# (c.chefOrder <: isCompleted).False > 1
 }
 
-// True iff i is cooking more than a single order
+// True iff i is cooking more than a single uncompleted order
 pred moreThanOneInternCook[i: Intern] {
 	# (i.internOrder <: isCompleted).False > 1
 }
@@ -344,4 +348,4 @@ fun getDeliveredOrders[c: Customer, b: Bool] : set Order {
 }
 
 
-run empty for 7 but exactly 5 Chef, exactly 5 Courier, exactly 3 Intern, exactly 3 Delivery
+run moreThanOneChef for 7 but exactly 5 Chef, exactly 5 Courier, exactly 3 Intern, exactly 3 Delivery
