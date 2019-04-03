@@ -46,7 +46,7 @@ sig ManagementSystem {
 sig Delivery {
 	canBeDelivered: one Bool, // if all orders in delivery are completed
 	isDelivered: one Bool, // delivery is finished
-	deliveryEmployee: some Courier +  Intern,
+	deliveryEmployee: set Courier +  Intern,
 	deliveryOrder: some Order
 }
 
@@ -140,6 +140,10 @@ fact startTimeOrder {
 
 fact deliverable {
 	all d: Delivery, o: d.deliveryOrder | d.canBeDelivered=True => o.isCompleted=True
+}
+
+fact deliverable2 {
+	all d: Delivery | d.canBeDelivered=False => #d.deliveryEmployee=0
 }
 
 fact delivered {
@@ -333,7 +337,8 @@ fun getPayment[c: Customer] : Payment {
 
 // Returns all the orders that are being cooked
 fun getAllBeingCookedOrders[m: ManagementSystem] : set Order {
-	(m.managementSystemOrder <: orderPizza.isCooked).False
+	// TODO: change: orders are being cooked if they are not completed and are assigned to intern or chef
+	(m.managementSystemOrder <: orderPizza.isCooked).False & (m.managementSystemOrder <: orderChef.Chef) & (m.managementSystemOrder <: orderIntern.Intern)
 } 
 
 
