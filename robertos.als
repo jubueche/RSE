@@ -164,7 +164,7 @@ fact noSingleInstances {
 
 // Number 3
 fact ordersAtATime{
-	all c: Customer | let dO = # getDeliveredOrders[c,False] | 
+	all c: Customer | let dO = # (c.customerOrder <: orderDelivery.isDelivered.False)  | 
 		c.isPremium = True => dO =< 2 else dO =< 1
 }
 
@@ -348,8 +348,9 @@ fun getAllBeingDeliveredOrders[m: ManagementSystem] : set Order {
 }
 
 // Returns all the orders that are being delivered
-fun getDeliveredOrders[c: Customer, b: Bool] : set Order {
-	(c.customerOrder  <: orderDelivery.isDelivered).b
+fun getDeliveredOrders[c: Customer] : set Order {
+	// TODO: orders are being delivered if they are part of a delivery that has not been delivered yet and have been assigned to interns or courier
+	(c.customerOrder  <: orderDelivery.isDelivered).False & (c.customerOrder <: orderDelivery.deliveryEmployee.Employee)
 }
 
 
