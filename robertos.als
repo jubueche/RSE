@@ -338,7 +338,7 @@ fun getPayment[c: Customer] : Payment {
 // Returns all the orders that are being cooked
 fun getAllBeingCookedOrders[m: ManagementSystem] : set Order {
 	// TODO: change: orders are being cooked if they are not completed and are assigned to intern or chef
-	(m.managementSystemOrder <: orderPizza.isCooked).False & (m.managementSystemOrder <: orderChef.Chef) & (m.managementSystemOrder <: orderIntern.Intern)
+	(m.managementSystemOrder <: orderPizza.isCooked).False & ((m.managementSystemOrder <: orderChef.Chef) + (m.managementSystemOrder <: orderIntern.Intern))
 } 
 
 
