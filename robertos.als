@@ -355,3 +355,5 @@ fun getDeliveredOrders[c: Customer] : set Order {
 
 
 run moreThanOneChef for 7 but exactly 5 Chef, exactly 5 Courier, exactly 3 Intern, exactly 3 Delivery
+
+run empty
