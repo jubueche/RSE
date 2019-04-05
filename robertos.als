@@ -353,5 +353,8 @@ fun getDeliveredOrders[c: Customer] : set Order {
 	(c.customerOrder  <: orderDelivery.isDelivered).False & (c.customerOrder <: orderDelivery.deliveryEmployee.Employee)
 }
 
+// Task B.1
+run empty for 5 but exactly 4 Chef, exactly 3 Courier, exactly 2 Intern // always only one restaurant
 
-run moreThanOneChef for 7 but exactly 5 Chef, exactly 5 Courier, exactly 3 Intern, exactly 3 Delivery
+// Larger instance
+run empty for 8
